@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+
+<!--
+Space Invaders Game
+Raymond Van Zandt
+rlv220
+-->
+
+<html>
+    <head>
+        <title>Space Invaders</title>
+        <style>
+            html { 
+                background: url(bg.png) no-repeat center center fixed; 
+                -webkit-background-size: cover;
+                -moz-background-size: cover;
+                -o-background-size: cover;
+                background-size: cover;
+                filter: brightness(150%);
+            }
+            #scoreBoard{
+                color: white;
+                z-index: 1;
+            }
+            #scoreBoardLabel{
+                color: white;
+                z-index: 1;
+            }
+            .button {
+                    width: 150px;
+                    background-color: green;
+                    border: none;
+                    color: white;
+                    padding: 15px 32px;
+                    font-size: 16px;
+                    position: relative;
+                    margin: 100 auto;
+                    margin-left:45%;
+                    cursor: pointer;
+                    display: flex;
+                    justify-content: center;
+            }
+            .button2 {
+                    width: 150px;
+                    margin: 0 auto;
+                    background-color: green;
+                    border: none;
+                    color: white;
+                    margin-left: 45%;
+                    margin-top: 5px;
+                    padding: 15px 32px;
+                    text-align: center;
+                    text-decoration: none;
+                    font-size: 16px;
+                    position: relative;
+                    cursor: pointer;
+            }
+            p{
+                z-index: 1;
+                margin-left: 0px;
+                border: none;
+                color: white;
+                font-size: 32px;
+                position: relative;
+                text-align: center;
+            }
+        </style>
+    </head>
+
+    <body id="bdy" onload="init()" onresize="windowResize()">
+        <p id="1">Welcome to Space Invaders</p>
+        <p id="2">Created By: Raymond Van Zandt</p>
+        <button type="button" class=button onclick="start(); load(); createScore(); hide_buttons();" id="button">Launch</button>
+        <button type="button" class=button2 onclick="easy();" id="easy">Easy</button><br>
+        <button type="button" class=button2 onclick="medium();" id="medium">Medium</button><br>
+        <button type="button" class=button2 onclick="hard();" id="hard">Hard</button>
+
+
+
+        <script>
+            let diff = 5;
+            let body;
+            let spaceShipX = 0;
+            let spaceShipY = 0;
+            let spaceShipImageWidth = 0;
+            let lastWidth = window.innerWidth;
+            let alienId = 0;
+
+
+            function init() {
+                body = document.getElementById("bdy");
+                timer();
+                //start(); //auto start
+            }
+
+            // Update the position of the images every millisecond
+            function timer()
+            {
+                Bullet.moveAll();
+                Invader.moveAll();
+                setTimeout("timer()", 10);
+            }
+
+
+            /*****
+                Alien Functions
+            *****/
+            // Constructor for Alien objects
+            function Invader(x, y, dirx, diry) {
+                Invader.list.push(this);
+                this.x = x;
+                this.y = y;
+                this.dirX = dirx;
+                this.dirY = diry;
+                this.image = null;
+            }
+
+            Invader.prototype.launch = function () {
+                // Create an IMG element using the DOM methods
+                var imageElement = document.createElement("img"); 
+                imageElement.setAttribute("src", "alien2.gif");
+                imageElement.setAttribute("id", alienId);
+                alienId +=1;
+                imageElement.style.position = "absolute";
+                imageElement.height = 60;
+                imageElement.width = 60;
+
+                // Add the IMG element to the BODY element
+                body.appendChild(imageElement)
+
+                // Save reference to IMG element as instance property
+                this.image = imageElement;
+
+            } // Instance method
+
+            
+            Invader.prototype.move = function () {
+                // Recalculate direction of the alien when it hits wall.
+                if (this.x + this.image.width  >= lastWidth){
+                    this.y += 60;
+                    this.dirX = -this.dirX;
+
+                    //add more aliens
+                    if ((Invader.list.indexOf(this) == (Invader.list.length - 1)) && (Invader.list.length < 20)){
+                        start()
+                    }
+                }  
+
+                // check if spaceship was hit
+                var xVal = this.x + this.image.width - spaceShipX; 
+                var yVal = this.y + this.image.height - spaceShipY;
+
+                if ((xVal <= spaceShipImageWidth && xVal >= 0) && (yVal <= spaceShipImageWidth && yVal >= 0)){
+                    var image = "C:/Users/rlv220/Desktop/Summer 2019/SpaceInvaders/exp.png";
+                    var destroyed_SpaceShip = document.getElementById("theSpaceShip");
+                    destroyed_SpaceShip.src = image;
+                    
+                    end_game();
+                } 
+
+                //else move down left wall
+                if (this.x <= 0) {
+                    this.y += 60;
+                    this.dirX = -this.dirX;
+                }
+
+                // Update the coordinates.
+                this.x += this.dirX;
+                this.y += this.dirY;
+
+                // Reposition the alien Image.
+                this.image.style.left = this.x + "px";
+                this.image.style.top = this.y + "px";
+            } // Instance method
+
+            // Move each alien in the list one unit in it's current direction
+            Invader.moveAll = function () {
+              Invader.list.forEach(function(e){e.move()});
+            }
+
+            Invader.next = 0; // Class property
+            Invader.list = []; // Class property
+
+            // Create a new alien object and set it in motion.
+            function start() {
+
+                let newInvader1 = new Invader(400, 70, diff, 0);
+                let newInvader2 = new Invader(300, 70, diff, 0);
+                let newInvader3 = new Invader(200, 70, diff, 0);
+                let newInvader4 = new Invader(100, 70, diff, 0);
+                let newInvader5 = new Invader(1, 70, diff, 0);
+                
+                newInvader1.launch();
+                newInvader2.launch();
+                newInvader3.launch();
+                newInvader4.launch();
+                newInvader5.launch();
+            }
+
+            /*****
+                SpaceShip Functions
+            *****/
+            // Constructor for SpaceShip
+            function SpaceShip(x, y, dirx, diry) {
+                SpaceShip.list.push(this);
+                this.x = x;
+                this.y = y;
+                this.dirX = dirx;
+                this.dirY = diry;
+                this.image = null;
+            }
+
+            function load(){
+                let spaceShip = new SpaceShip(lastWidth/2,window.innerHeight - 100,0,0);
+                spaceShip.launch();
+            }
+
+            SpaceShip.prototype.launch = function () {
+                // Create an IMG element using the DOM methods
+                var imageElement = document.createElement("img");
+                imageElement.setAttribute("src", "ss2.png");
+                imageElement.setAttribute("id", "theSpaceShip");
+
+                imageElement.style.position = "absolute";
+                imageElement.height = 100;
+                imageElement.width = 100;
+
+                // Add the IMG element to the BODY element
+                body.appendChild(imageElement);
+
+                // Save reference to IMG element as instance property
+                this.image = imageElement;
+
+                //Intialize Spaceship position
+                SpaceShip.list.forEach(function(f){f.move(0,0)})
+
+            }
+
+
+            SpaceShip.next = 0; // Class property
+            SpaceShip.list = []; // Class property
+
+            SpaceShip.prototype.move = function (movx,movy) { 
+                this.dirX = movx;
+                this.dirY = movy;
+
+                // Update the coordinates.
+                this.x += this.dirX;
+                this.y += this.dirY;
+
+                //set spaceship left window boundaries
+                if(this.x <= 0){
+                    this.x = 0;
+                }
+
+                //right window boundaries
+                if(this.x + this.image.width >= lastWidth){
+                    this.x = lastWidth - this.image.width;
+                }
+
+                // Reposition the spaceShip Image.
+                if(this.image != null){
+                    this.image.style.left = this.x + "px";
+                    this.image.style.top = this.y + "px";
+
+                    spaceShipImageWidth = this.image.width;
+                    spaceShipX = this.x;
+                    spaceShipY = this.y;
+                }
+            } // Instance method
+
+            /*****
+                Bullet Functions
+            *****/
+            // Constructor for Bullet
+            function Bullet(x, y, dirx, diry) {
+                Bullet.list.push(this);
+                this.x = x;
+                this.y = y;
+                this.dirX = dirx;
+                this.dirY = diry;
+                this.image = null;
+            }
+
+            function fire(){
+                //position bullet relative to spaceship
+                let bullet = new Bullet(SpaceShip.list[0].x + 50, SpaceShip.list[0].y, 0, 0);
+                bullet.launch();
+            }
+
+            Bullet.prototype.launch = function () {
+                // Create an IMG element using the DOM methods
+                var imageElement = document.createElement("img");
+                imageElement.setAttribute("src", "Laser2.png");
+                imageElement.style.position = "absolute";
+                imageElement.height = 20;
+                imageElement.width = 10;
+
+                // Add the IMG element to the BODY element
+                body.appendChild(imageElement);
+
+                // Save reference to IMG element as instance property
+                this.image = imageElement;
+
+                //Intialize bullet  position
+                Bullet.list.forEach(function(f){f.move()})
+
+            }
+
+
+            Bullet.next = 0; // Class property
+            Bullet.list = []; // Class property
+
+            Bullet.moveAll = function () {
+              Bullet.list.forEach(function(e){e.move()});
+            }
+
+            Bullet.prototype.move = function () {
+                // check if bullet hit the ceiling
+                if (this.y <= 0){
+                    var index = Bullet.list.indexOf(this);
+                    if(index > -1){
+                        this.image.src = '';
+                        this.image = null;
+                        Bullet.list.splice(index, 1);
+                    }
+                }
+                else{
+                    var breakloop = false;
+                    //find the alien we hit, delete it and the bullet
+                    for (var i = 0; i < Invader.list.length; i++){
+                        if(breakloop == true){break;}
+                        if ((this.y - Invader.list[i].y <= 25) && ((this.x - Invader.list[i].x) <= 25 && (this.x - Invader.list[i].x) >= -25)){
+                            var bulletIndex = Bullet.list.indexOf(this);
+                            if(bulletIndex > -1){
+                                this.image.src = '';
+                                this.image = null;
+                                Bullet.list.splice(bulletIndex, 1);
+                            }
+
+                            var alienIndex = Invader.list.indexOf(Invader.list[i]);
+                            var id = Invader.list[i].image.getAttribute('id');
+                            var alien_remove = document.getElementById(id);
+                            alien_remove.parentNode.removeChild(alien_remove);
+
+                            delete Invader.list[i];
+                            Invader.list.splice(alienIndex, 1);
+                            setScore(10);
+                            breakloop = true;
+                            
+                        }
+                    }
+                }
+
+                this.dirX = 0;
+                this.dirY = -10;
+
+                // Update the coordinates.
+                this.x += this.dirX;
+                this.y += this.dirY;
+
+                if(this.image != null){
+                this.image.style.left = this.x + "px";
+                this.image.style.top = this.y + "px";
+                }
+            }
+
+          
+            document.onkeydown = checkKey;
+
+            function checkKey(e) {
+                var currmov = 0;
+                e = e || window.event;
+
+                //left arrow key
+                if (e.keyCode == '37') {
+                    SpaceShip.list.forEach(function(f){f.move(-20,0)})
+                }
+                //right arrow key
+                else if (e.keyCode == '39') {
+                    SpaceShip.list.forEach(function(f){f.move(20,0)})
+                }
+                //spacebar
+                else if (e.keyCode == '32'){
+                    if(Bullet.list.length < 3){
+                        fire();
+                    }
+                }
+            }
+
+            function setScore(scoreToAdd){
+                var currentScore = document.getElementById("scoreBoard");
+                currentScore.innerHTML = parseFloat(currentScore.innerHTML) + scoreToAdd; 
+            }
+
+            function createScore() {
+                //add support for mobile by making clicks/dblclicks used for moving and firing
+                document.addEventListener("dblclick", doubleClick);
+                document.addEventListener("mousedown", mousedown);
+                document.addEventListener("mouseup", mouseup);
+
+
+                //Create Labels
+                var scoreText = document.createElement('score');
+                scoreText.innerHTML = 0;
+
+                var label = document.createElement('Label');
+                label.innerHTML = "Score: ";
+
+                scoreText.setAttribute("style", "font-weight:normal");
+                label.setAttribute("style", "font-weight:normal");
+
+                scoreText.setAttribute("id", "scoreBoard");
+                label.setAttribute("id", "scoreBoardLabel");
+
+                scoreText.style.position = "relative"
+                label.style.position = "relative"
+
+                scoreText.style.marginBottom = "500px";
+                label.style.marginBottom = "500px";
+
+                scoreText.style.fontSize = "30px";
+                label.style.fontSize = "30px";
+
+                //Append the element in page (in span).
+                body.appendChild(label);
+                body.appendChild(scoreText);
+                
+            }
+
+            function windowResize(){
+                if((window).innerWidth != lastWidth){
+                    //execute code here.
+                    lastWidth = (window).innerWidth;
+                }
+            }
+
+            function doubleClick(){
+                fire();
+            }
+
+            let lastChange = 0;
+            let mouse = false;
+            function mousedown(){
+                mouse = true;
+                callEvent(event.clientX);
+            }
+            function mouseup()
+            {
+                mouse =false;
+            }
+            function callEvent(cursorX)
+            {
+                let theSpaceShip = document.getElementById("theSpaceShip");
+                
+                if(mouse)
+                {  
+                    if(cursorX < theSpaceShip.x){
+                        lastChange = -2;
+                        
+                        SpaceShip.list.forEach(function(f){f.move(-3,0)})
+                    }
+                    else if(cursorX >= theSpaceShip.x){
+                        lastChange = 2;
+                        
+                        SpaceShip.list.forEach(function(f){f.move(3,0)})
+                    }
+                    else{
+                        
+                        SpaceShip.list.forEach(function(f){f.move(lastChange,0)})
+                    }
+
+                    setTimeout("callEvent()",1);
+                
+                }
+                else
+                    return;
+            }
+
+            function easy(){
+                var button1 = document.getElementById("easy");
+                button1.style.background = 'red'
+                var button1 = document.getElementById("medium");
+                button1.style.background = 'green'
+                var button1 = document.getElementById("hard");
+                button1.style.background = 'green'
+                diff = 5;
+            }
+
+            function medium(){
+                var button1 = document.getElementById("easy");
+                button1.style.background = 'green'
+                var button1 = document.getElementById("medium");
+                button1.style.background = 'red'
+                var button1 = document.getElementById("hard");
+                button1.style.background = 'green'
+                diff = 8;
+            }
+
+            function hard(){
+                var button1 = document.getElementById("easy");
+                button1.style.background = 'green'
+                var button1 = document.getElementById("medium");
+                button1.style.background = 'green'
+                var button1 = document.getElementById("hard");
+                button1.style.background = 'red'
+                diff = 10;
+            }
+
+            function hide_buttons(){
+                var paragraph1 = document.getElementById("1");
+                paragraph1.parentNode.removeChild(paragraph1);
+                //paragraph1.innerHTML = "";
+                var paragraph2 = document.getElementById("2");
+                paragraph2.parentNode.removeChild(paragraph2);
+                //paragraph2.innerHTML = "";
+
+                var button = document.getElementById("button");
+                button.parentNode.removeChild(button);
+                var button1 = document.getElementById("easy");
+                button1.parentNode.removeChild(button1);
+                var button2 = document.getElementById("medium");
+                button2.parentNode.removeChild(button2);
+                var button3 = document.getElementById("hard");
+                button3.parentNode.removeChild(button3);
+            }
+
+            function end_game(){
+
+                setTimeout(function(){
+                    if (confirm("GAME OVER. Final Score: " + document.getElementById("scoreBoard").innerHTML + "\n" + "Play Again?")){
+                        location.reload();
+                    }
+                    else{
+                        window.open('', '_self', ''); window.close();
+                            
+                    }
+                }, 50);
+            }
+        </script>
+    </body>
+</html>
